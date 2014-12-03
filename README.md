@@ -1,4 +1,4 @@
 gatt-ip-ios
 ===========
 
-iOS library for gatt-ip.
+iOS library for GATT-IP.
