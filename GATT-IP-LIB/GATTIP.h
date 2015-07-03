@@ -1,17 +1,17 @@
 /* The MIT License
-
+ 
  Copyright (c) 2010-2014 Vensi, Inc. http://gatt-ip.org
-
+ 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
-
+ 
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
-
+ 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -103,6 +103,11 @@ static NSString * const kCBAdvertisementDataOverflowServiceUUIDsKey     = @"b6";
 static NSString * const kCBAdvertisementDataSolicitedServiceUUIDsKey    = @"b7";
 static NSString * const kCBAdvertisementDataIsConnectable               = @"b8";
 static NSString * const kCBAdvertisementDataTxPowerLevel                = @"b9";
+static NSString * const kPeripheralBtAddress                                      = @"c1";
+static NSString * const kRawAdvertisementData                                  = @"c2";
+static NSString * const kScanRecord                                                   = @"c3";
+static NSString * const kScanTime                                                      = @"c4";
+
 
 //Will Restore State Keys
 static NSString * const kCBCentralManagerRestoredStatePeripheralsKey    = @"da";
@@ -128,6 +133,20 @@ static NSString * const kUnsupported                      = @"cm";
 static NSString * const kUnauthorized                     = @"cn";
 static NSString * const kPoweredOff                       = @"co";
 static NSString * const kPoweredOn                        = @"cp";
+
+//Advertising Data Types
+static NSString * const ADFlags                         = @"01";
+static NSString * const ShortLocalName              = @"08";
+static NSString * const CompleteLocalName          = @"09";
+static NSString * const TxPowerLevel                  = @"0A";
+static NSString * const Listof16bitServiceSolicitationUUIDs  = @"14";
+static NSString * const Listof32bitServiceSolicitationUUIDs  = @"1F";
+static NSString * const Listof128bitServiceSolicitationUUIDs = @"15";
+static NSString * const ServiceData16bitUUID  = @"02";
+static NSString * const ServiceData32bitUUID = @"04";
+static NSString * const ServiceData128bitUUID  = @"06";
+static NSString * const ManufacturerSpecificData = @"FF";
+
 
 //----------------------------------------- Error Values ------------------------------------------------
 static NSString * const kError32001                     = @"-32001";//Peripheral not Found

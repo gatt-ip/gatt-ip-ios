@@ -70,11 +70,7 @@
         [listOfServiceCBUUIDs addObject:aserviceUUID];
     }
     
-    if(listOfServiceCBUUIDs.count > 0)
-    {
-        return  listOfServiceCBUUIDs;
-    }
-    return nil;
+    return listOfServiceCBUUIDs;
 }
 
 + (CBPeripheral *)peripheralIn:(NSMutableDictionary *)peripheralCollection  withNSUUID:(NSUUID *)peripheralIdentifier;
@@ -167,8 +163,8 @@
     for (CBCharacteristic *aCharacteristic in arrayOfCharacteristic)
     {
         NSString *characteristcUUIDString = [[aCharacteristic UUID] UUIDString];
-        NSString *characteristcProperty = [NSString stringWithFormat:@"%lu",aCharacteristic.properties ];
-
+        NSString *characteristcProperty = [NSString stringWithFormat:@"%lu",(unsigned long)aCharacteristic.properties ];
+        
         NSData   *characteristcValue = [aCharacteristic value];
         NSString *characteristcValueString = [Util nsDataToHex:characteristcValue];
         [jsonList addObject:@{kIsNotifying:[NSNumber numberWithBool:aCharacteristic.isNotifying],
@@ -270,6 +266,17 @@
     return commandToSend;
 }
 
++(NSString*)nsStringToHex:(NSString*)str {
+    NSString * hexStr = [NSString stringWithFormat:@"%@",
+                         [NSData dataWithBytes:[str cStringUsingEncoding:NSUTF8StringEncoding]
+                                        length:strlen([str cStringUsingEncoding:NSUTF8StringEncoding])]];
+    
+    for(NSString * toRemove in [NSArray arrayWithObjects:@"<", @">", @" ",@"-",@"_", nil])
+        hexStr = [hexStr stringByReplacingOccurrencesOfString:toRemove withString:@""];
+    NSLog(@"%@", hexStr);
+    return hexStr;
+}
+
 + (CBCharacteristicWriteType )writeTypeForCharacteristicGiven:(NSString *)stringWriteType
 {
     if([stringWriteType isEqualToString:kWriteWithoutResponse])
@@ -282,85 +289,87 @@
 
 + (NSString *)humanReadableFormatFromHex:(NSString *)hexString
 {
-    NSDictionary *methods =  @{@"aa":@"Configure",
-                               @"ab":@"ScanForPeripherals",
-                               @"ac":@"StopScanning",
-                               @"ad":@"Connect",
-                               @"ae":@"Disconnect",
-                               @"af":@"CentralState",
-                               @"ag":@"GetConnectedPeripherals",
-                               @"ah":@"GetPerhipheralsWithServices",
-                               @"ai":@"GetPerhipheralsWithIdentifiers",
-                               @"ak":@"GetServices",
-                               @"al":@"GetIncludedServices",
-                               @"am":@"GetCharacteristics",
-                               @"an":@"GetDescriptors",
-                               @"ao":@"GetCharacteristicValue",
-                               @"ap":@"GetDescriptorValue",
-                               @"aq":@"WriteCharacteristicValue",
-                               @"ar":@"WriteDescriptorValue",
-                               @"as":@"SetValueNotification",
-                               @"at":@"GetPeripheralState",
-                               @"au":@"GetRSSI",
-                               @"av":@"InvalidatedServices",
-                               @"aw":@"peripheralNameUpdate",
+    NSDictionary *methods =  @{kConfigure:@"Configure",
+                               kScanForPeripherals:@"ScanForPeripherals",
+                               kStopScanning:@"StopScanning",
+                               kConnect:@"Connect",
+                               kDisconnect:@"Disconnect",
+                               kCentralState:@"CentralState",
+                               kGetConnectedPeripherals:@"GetConnectedPeripherals",
+                               kGetPerhipheralsWithServices:@"GetPerhipheralsWithServices",
+                               kGetPerhipheralsWithIdentifiers:@"GetPerhipheralsWithIdentifiers",
+                               kGetServices:@"GetServices",
+                               kGetIncludedServices:@"GetIncludedServices",
+                               kGetCharacteristics:@"GetCharacteristics",
+                               kGetDescriptors:@"GetDescriptors",
+                               kGetCharacteristicValue:@"GetCharacteristicValue",
+                               kGetDescriptorValue:@"GetDescriptorValue",
+                               kWriteCharacteristicValue:@"WriteCharacteristicValue",
+                               kWriteDescriptorValue :@"WriteDescriptorValue",
+                               kSetValueNotification:@"SetValueNotification",
+                               kGetPeripheralState:@"GetPeripheralState",
+                               kGetRSSI:@"GetRSSI",
+                               kInvalidatedServices:@"InvalidatedServices",
+                               kPeripheralNameUpdate:@"peripheralNameUpdate",
                                };
-    
-    NSDictionary *keys = @{@"ba":@"centralUUID",
-                           @"bb":@"peripheralUUID",
-                           @"bc":@"PeripheralName",
-                           @"bd":@"PeripheralUUIDs",
-                           @"be":@"ServiceUUID",
-                           @"bf":@"ServiceUUIDs",
-                           @"bg":@"peripherals",
-                           @"bh":@"IncludedServiceUUIDs",
-                           @"bi":@"CharacteristicUUID",
-                           @"bj":@"CharacteristicUUIDs",
-                           @"bk":@"DescriptorUUID",
-                           @"bl":@"Services",
-                           @"bm":@"Characteristics",
-                           @"bn":@"Descriptors",
-                           @"bo":@"Properties",
-                           @"bp":@"Value",
-                           @"bq":@"State",
-                           @"br":@"StateInfo",
-                           @"bs":@"StateField",
-                           @"bt":@"WriteType",
-                           @"bu":@"RSSIkey",
-                           @"bv":@"IsPrimaryKey",
-                           @"bw":@"IsBroadcasted",
-                           @"bx":@"IsNotifying",
-                           @"by":@"ShowPowerAlert",
-                           @"bz":@"IdentifierKey",
-                           @"b0":@"ScanOptionAllowDuplicatesKey",
-                           @"b1":@"ScanOptionSolicitedServiceUUIDs",
-                           @"b2":@"AdvertisementDataKey",
-                           @"b3":@"CBAdvertisementDataManufacturerDataKey",
-                           @"b4":@"CBAdvertisementDataServiceUUIDsKey",
-                           @"b5":@"CBAdvertisementDataServiceDataKey",
-                           @"b6":@"CBAdvertisementDataOverflowServiceUUIDsKey",
-                           @"b7":@"CBAdvertisementDataSolicitedServiceUUIDsKey",
-                           @"b8":@"CBAdvertisementDataIsConnectable",
-                           @"b9":@"CBAdvertisementDataTxPowerLevel",
-                           @"da":@"CBCentralManagerRestoredStatePeripheralsKey",
-                           @"db":@"CBCentralManagerRestoredStateScanServicesKey"
+    NSDictionary *keys = @{kCentralUUID:@"centralUUID",
+                           kPeripheralUUID:@"peripheralUUID",
+                           kPeripheralName:@"PeripheralName",
+                           kPeripheralUUIDs:@"PeripheralUUIDs",
+                           kServiceUUID:@"ServiceUUID",
+                           kServiceUUIDs:@"ServiceUUIDs",
+                           kPeripherals:@"peripherals",
+                           kIncludedServiceUUIDs:@"IncludedServiceUUIDs",
+                           kCharacteristicUUID:@"CharacteristicUUID",
+                           kCharacteristicUUIDs:@"CharacteristicUUIDs",
+                           kDescriptorUUID:@"DescriptorUUID",
+                           kServices:@"Services",
+                           kCharacteristics:@"Characteristics",
+                           kDescriptors:@"Descriptors",
+                           kProperties:@"Properties",
+                           kValue :@"Value",
+                           kState:@"State",
+                           kStateInfo:@"StateInfo",
+                           kStateField:@"StateField",
+                           kWriteType:@"WriteType",
+                           kRSSIkey:@"RSSIkey",
+                           kIsPrimaryKey:@"IsPrimaryKey",
+                           kIsBroadcasted:@"IsBroadcasted",
+                           kIsNotifying:@"IsNotifying",
+                           kShowPowerAlert:@"ShowPowerAlert",
+                           kIdentifierKey:@"IdentifierKey",
+                           kScanOptionAllowDuplicatesKey:@"ScanOptionAllowDuplicatesKey",
+                           kScanOptionSolicitedServiceUUIDs:@"ScanOptionSolicitedServiceUUIDs",
+                           kAdvertisementDataKey:@"AdvertisementDataKey",
+                           kCBAdvertisementDataManufacturerDataKey:@"CBAdvertisementDataManufacturerDataKey",
+                           kCBAdvertisementDataServiceUUIDsKey:@"CBAdvertisementDataServiceUUIDsKey",
+                           kCBAdvertisementDataServiceDataKey:@"CBAdvertisementDataServiceDataKey",
+                           kCBAdvertisementDataOverflowServiceUUIDsKey:@"CBAdvertisementDataOverflowServiceUUIDsKey",
+                           kCBAdvertisementDataSolicitedServiceUUIDsKey:@"CBAdvertisementDataSolicitedServiceUUIDsKey",
+                           kCBAdvertisementDataIsConnectable:@"CBAdvertisementDataIsConnectable",
+                           kCBAdvertisementDataTxPowerLevel:@"CBAdvertisementDataTxPowerLevel",
+                           kCBCentralManagerRestoredStatePeripheralsKey:@"CBCentralManagerRestoredStatePeripheralsKey",
+                           kCBCentralManagerRestoredStateScanServicesKey:@"CBCentralManagerRestoredStateScanServicesKey",
+                           kPeripheralBtAddress:@"BTAddress",
+                           kRawAdvertisementData:@"RawAdvertisingData",
+                           kScanRecord:@"ScanRecord"
                            };
     
-    NSDictionary *values = @{@"cc":@"WriteWithResponse",
-                             @"cd":@"WriteWithoutResponse",
-                             @"ce":@"NotifyOnConnection",
-                             @"cf":@"NotifyOnDisconnection",
-                             @"cg":@"NotifyOnNotification",
-                             @"ch":@"Disconnected",
-                             @"ci":@"Connecting",
-                             @"cj":@"Connected",
-                             @"ck":@"Unknown",
-                             @"cl":@"Resetting",
-                             @"cm":@"Unsupported",
-                             @"cn":@"Unauthorized",
-                             @"co":@"PoweredOff",
-                             @"cp":@"PoweredOn"};
-
+    NSDictionary *values = @{kWriteWithResponse:@"WriteWithResponse",
+                             kWriteWithoutResponse:@"WriteWithoutResponse",
+                             kNotifyOnConnection :@"NotifyOnConnection",
+                             kNotifyOnDisconnection:@"NotifyOnDisconnection",
+                             kNotifyOnNotification:@"NotifyOnNotification",
+                             kDisconnected :@"Disconnected",
+                             kConnecting:@"Connecting",
+                             kConnected:@"Connected",
+                             kUnknown :@"Unknown",
+                             kResetting:@"Resetting",
+                             kUnsupported:@"Unsupported",
+                             kUnauthorized:@"Unauthorized",
+                             kPoweredOff:@"PoweredOff",
+                             kPoweredOn:@"PoweredOn"};
+    
     if([methods valueForKey:hexString])
     {
         return [methods valueForKey:hexString];
@@ -373,7 +382,7 @@
     {
         return [values valueForKey:hexString];
     }
-
+    
     return hexString ? hexString : @"";
 }
 

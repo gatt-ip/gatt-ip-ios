@@ -56,6 +56,8 @@ static NSString * const descriptorKey = @"descriptor";//@"descriptor";
 
 + (NSString*) nsDataToHex:(NSData*)data ;
 
++(NSString*)nsStringToHex:(NSString*)hex;
+
 + (NSMutableData *) hexToNSData: (NSString *) command;
 
 + (NSString *)stringDescriptorValueFrom:(CBDescriptor *)descriptor;
@@ -67,12 +69,12 @@ static NSString * const descriptorKey = @"descriptor";//@"descriptor";
 + (NSArray *)listOfServiceUUIDStrings:(NSArray *)input;
 
 /**
- *  Helps convert the Dictionary object for key  CBAdvertisementDataServiceDataKey in advertisment dictionary in 
+ *  Helps convert the Dictionary object for key  CBAdvertisementDataServiceDataKey in advertisment dictionary in
  *  the delegate method  - (void)centralManager:(CBCentralManager *)central
-                                didDiscoverPeripheral:(CBPeripheral *)peripheral
-                                advertisementData:(NSDictionary *)advertisementData
-                                RSSI:(NSNumber *)RSSI
-    ----- ALSO: it is utilized in converting the array of CBBUID objects for the key CBCentralManagerRestoredStateScanServicesKey in state restoration
+ didDiscoverPeripheral:(CBPeripheral *)peripheral
+ advertisementData:(NSDictionary *)advertisementData
+ RSSI:(NSNumber *)RSSI
+ ----- ALSO: it is utilized in converting the array of CBBUID objects for the key CBCentralManagerRestoredStateScanServicesKey in state restoration
  *  into a dicitionary where the CBUUID objects are their string equivalents and the data is converted into
  *  hex
  *  @param input Dictionary for  key  CBAdvertisementDataServiceDataKey in advertisment data
@@ -86,7 +88,7 @@ static NSString * const descriptorKey = @"descriptor";//@"descriptor";
  *  seralize NSDictionary objects , the same can not be said for the CBPeripheral objcets
  *  @param input ----An array (an instance of NSArray) of CBPeripheral objects that contains all of the peripherals that were connected to the central manager (or had a connection pending) at the time the app was terminated by the system.
  *
- *  @return -- the exact replica of the input array , except the peripherals are now dictionaries and the UUID's strings and the state is also 
+ *  @return -- the exact replica of the input array , except the peripherals are now dictionaries and the UUID's strings and the state is also
  *  converted to a string(all for the purposes of seralization
  */
 
