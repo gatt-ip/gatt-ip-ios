@@ -398,6 +398,17 @@
     return listService;
 }
 
++(NSString *)reverseServiceUUID:(NSString *)serviceUUID {
+    
+    int length = (int)[serviceUUID length];
+    NSMutableString *reverseUUID= [[NSMutableString alloc] initWithCapacity:length];
+    for(int i = length-1; i >= 0; i = i-2) {
+        [reverseUUID appendString:[NSString stringWithFormat:@"%c",[serviceUUID characterAtIndex:i-1]]];
+        [reverseUUID appendString:[NSString stringWithFormat:@"%c",[serviceUUID characterAtIndex:i]]];
+    }
+    return reverseUUID;
+}
+
 + (NSDictionary * )collectionOfServiceAdvertismentData:(NSDictionary *)input
 {
     NSMutableDictionary *mutatedServiceAdevertismentData = [NSMutableDictionary new];

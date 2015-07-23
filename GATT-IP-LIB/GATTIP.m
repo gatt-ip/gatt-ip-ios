@@ -248,37 +248,51 @@ static NSString *sCBUUID;
     if(kCBAdvDataServiceUUIDsArray)
     {
         NSArray *mutatedkCBAdvDataServiceUUIDsArray = [Util listOfServiceUUIDStrings:kCBAdvDataServiceUUIDsArray];
+        int length = 0;
+        NSMutableString *uuid = [[NSMutableString alloc] init];
+        NSString *serviceType = [[NSString alloc] init];
         for(int i =0; i<[mutatedkCBAdvDataServiceUUIDsArray count]; i++) {
             NSString *serviceUUID = [NSString stringWithFormat:@"%@",[mutatedkCBAdvDataServiceUUIDsArray objectAtIndex:i]];
-            [advData appendString:[NSString stringWithFormat:@"%02x",(unsigned int)[serviceUUID length]/2+1]];
-            NSString *uuid;
+            
             if([serviceUUID length] == 4) {
-                [advData appendString:ServiceData16bitUUID];
-                uuid = [NSString stringWithFormat:@"%c%c%c%c",[serviceUUID characterAtIndex:2],[serviceUUID characterAtIndex:3],[serviceUUID characterAtIndex:0],[serviceUUID characterAtIndex:1]];
-            } else if([serviceUUID length] == 8)
-                [advData appendString:ServiceData32bitUUID];
-            else if([serviceUUID length] == 32)
-                [advData appendString:ServiceData128bitUUID];
+                length += 2;
+                serviceType = ServiceData16bitUUID;
+                [uuid appendString:[Util reverseServiceUUID:serviceUUID]];
+            } else if([serviceUUID length] == 8) {
+                length += 4;
+                serviceType = ServiceData32bitUUID;
+                serviceUUID = [serviceUUID stringByReplacingOccurrencesOfString:@"-" withString:@""];
+                [uuid appendString:[Util reverseServiceUUID:serviceUUID]];
+            } else if([serviceUUID length] == 36) {
+                length += 16;
+                serviceType = ServiceData128bitUUID;
+                serviceUUID = [serviceUUID stringByReplacingOccurrencesOfString:@"-" withString:@""];
+                [uuid appendString:[Util reverseServiceUUID:serviceUUID]];
+            }
            
+        }
+        if(length > 0 && [serviceType length] > 0 && [uuid length] > 0) {
+            [advData appendString:[NSString stringWithFormat:@"%02x",length+1]];
+            [advData appendString:serviceType];
             [advData appendString:uuid];
         }
     }
     //---CBAdvertisementDataServiceDataKey
-    NSDictionary *kCBAdvertisementDataServiceDataDictionary = [advertisementData objectForKey:@"kCBAdvDataServiceData"];//kCBAdvDataServiceData
+    NSDictionary *kCBAdvertisementDataServiceDataDictionary = [advertisementData objectForKey:@"kCBAdvDataServiceData"];
     if(kCBAdvertisementDataServiceDataDictionary)
     {
         NSDictionary *mutatedkCBAdvertisementDataServiceDataDictionary = [Util collectionOfServiceAdvertismentData:kCBAdvertisementDataServiceDataDictionary];
     }
     
     //---CBAdvertisementDataOverflowServiceUUIDsKey
-    NSArray *kCBAdvertisementDataOverflowServiceUUIDArray = [advertisementData objectForKey:@"kCBAdvDataOverflowServiceUUIDs"];// a kCBAdvDataOverflowServiceUUIDs
+    NSArray *kCBAdvertisementDataOverflowServiceUUIDArray = [advertisementData objectForKey:@"kCBAdvDataOverflowServiceUUIDs"];
     if(kCBAdvertisementDataOverflowServiceUUIDArray)
     {
         NSArray *mutatedkCBAdvertisementDataOverflowServiceUUIDArray = [Util listOfServiceUUIDStrings:kCBAdvertisementDataOverflowServiceUUIDArray];
     }
     
     //---CBAdvertisementDataSolicitedServiceUUIDsKey
-    NSArray *kCBAdvertisementDataSolicitedServiceUUIDArray = [advertisementData objectForKey:@"kCBAdvDataSolicitedServiceUUIDs"];//kCBAdvDataSolicitedServiceUUIDs
+    NSArray *kCBAdvertisementDataSolicitedServiceUUIDArray = [advertisementData objectForKey:@"kCBAdvDataSolicitedServiceUUIDs"];
     if(kCBAdvertisementDataSolicitedServiceUUIDArray)
     {
         NSArray *mutatedkCBAdvertisementDataSolicitedServiceUUIDArray = [Util listOfServiceUUIDStrings:kCBAdvertisementDataSolicitedServiceUUIDArray];
@@ -430,7 +444,6 @@ static NSString *sCBUUID;
         return;
     }
     NSString *errorMessage = error.localizedDescription;
-    //TODO: additional fields in params to be documented
     parameters = @{kPeripheralUUID:peripheralUUIDString,
                    kServiceUUID:serviceUUIDString};
     response = @{kResult:kGetCharacteristics,
@@ -445,7 +458,6 @@ static NSString *sCBUUID;
     NSDictionary *parameters;
     NSString *characteristicUUIDString  = [characteristic.UUID UUIDString];
     NSString *peripheralUUIDString = [peripheral.identifier UUIDString];
-    //NSString *serviceUUIDString = [characteristic.service.UUID UUIDString];
     if(!error)
     {
         NSArray  *descriptorArray = [Util listOfJsonDescriptorsFrom:characteristic.descriptors];
@@ -458,12 +470,7 @@ static NSString *sCBUUID;
         [self sendResponse:response];
         return;
     }
-    /*parameters = @{kCharacteristicUUID:characteristicUUIDString,
-     kPeripheralUUID:peripheralUUIDString};
-     NSString *errorMessage = error.localizedDescription;
-     response = @{kResult:kGetDescriptors,
-     kParams:parameters,
-     kError:@{kCode:kError32603,kMessageField:errorMessage}};*/
+    
     NSArray  *descriptorArray = [Util listOfJsonDescriptorsFrom:characteristic.descriptors];
     parameters = @{kCharacteristicUUID:characteristicUUIDString,
                    kPeripheralUUID:peripheralUUIDString,
@@ -880,13 +887,6 @@ static NSString *sCBUUID;
             requestDict = [NSDictionary dictionaryWithDictionary:request];
             NSDictionary *parameters = [request valueForKey:kParams];
             
-            if([parameters valueForKey:kScanTime]) {
-                int scantime = [[parameters valueForKey:kScanTime] intValue];
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, scantime * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                    requestDict = nil;
-                    [self.centralManager stopScan];
-                });
-            }
             if(parameters != nil ) {
                 NSNumber *duplicatesOnOffKey = [NSNumber numberWithBool:[[parameters valueForKey:kScanOptionAllowDuplicatesKey] boolValue]];
                 
@@ -1110,7 +1110,6 @@ static NSString *sCBUUID;
             return;
         }
         CBPeripheral *requestedPeripheral = [peripheralAndCharacteristic objectForKey:peripheralKey];
-        //TODO we neeed to handle writetype once we set the value for writetype on JS
         CBCharacteristicWriteType writeType = [Util writeTypeForCharacteristicGiven:[parameters valueForKey:kWriteType]];
         
         NSData *dataToWrite = [Util hexToNSData:[parameters valueForKey:kValue]];

@@ -68,6 +68,8 @@ static NSString * const descriptorKey = @"descriptor";//@"descriptor";
 
 + (NSArray *)listOfServiceUUIDStrings:(NSArray *)input;
 
++(NSString *)reverseServiceUUID:(NSString *)serviceUUID;
+
 /**
  *  Helps convert the Dictionary object for key  CBAdvertisementDataServiceDataKey in advertisment dictionary in
  *  the delegate method  - (void)centralManager:(CBCentralManager *)central

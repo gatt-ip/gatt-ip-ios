@@ -106,8 +106,6 @@ static NSString * const kCBAdvertisementDataTxPowerLevel                = @"b9";
 static NSString * const kPeripheralBtAddress                                      = @"c1";
 static NSString * const kRawAdvertisementData                                  = @"c2";
 static NSString * const kScanRecord                                                   = @"c3";
-static NSString * const kScanTime                                                      = @"c4";
-
 
 //Will Restore State Keys
 static NSString * const kCBCentralManagerRestoredStatePeripheralsKey    = @"da";
