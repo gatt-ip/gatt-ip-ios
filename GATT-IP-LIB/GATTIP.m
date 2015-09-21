@@ -34,6 +34,7 @@ NSInteger MAX_NUMBER_OF_REQUESTS = 60 ;
 @property NSMutableArray *availableDevices;
 @property NSMutableDictionary *connectedPeripheralsCollection;
 @property NSMutableArray *previousRequests;
+@property NSMutableArray *requestIDs;
 
 @end
 
@@ -113,11 +114,11 @@ static NSString *sCBUUID;
         }
         else if ([[request valueForKey:kMethod] isEqualToString:kGetPerhipheralsWithServices])
         {
-            [self getPerhipheralsWithServices:request];
+            //[self getPerhipheralsWithServices:request];
         }
         else if ([[request valueForKey:kMethod] isEqualToString:kGetPerhipheralsWithIdentifiers])
         {
-            [self getPerhipheralsWithIdentifiers:request];
+            //[self getPerhipheralsWithIdentifiers:request];
         }
         else if ([[request valueForKey:kMethod] isEqualToString:kGetServices])
         {
@@ -235,12 +236,12 @@ static NSString *sCBUUID;
     NSMutableString *advData = [[NSMutableString alloc] initWithCapacity:62];
     NSMutableDictionary *mutatedAdevertismentData = [NSMutableDictionary new];
     //---CBAdvertisementDataManufacturerDataKey
-    NSData *peripheralData = [advertisementData objectForKey:@"kCBAdvDataManufacturerData"];//kCBAdvDataManufacturerData
+    NSData *peripheralData = [advertisementData objectForKey:@"kCBAdvDataManufacturerData"];
     if(peripheralData)
     {
         NSString *peripheralDataAsHex = [Util nsDataToHex:peripheralData];
         [advData appendString:[NSString stringWithFormat:@"%02x",(unsigned int)[peripheralData length]+1]];
-        [advData appendString:ManufacturerSpecificData];
+        [advData appendString:kManufacturerSpecificData];
         [advData appendString:peripheralDataAsHex];
     }
     //---CBAdvertisementDataServiceUUIDsKey
@@ -253,23 +254,21 @@ static NSString *sCBUUID;
         NSString *serviceType = [[NSString alloc] init];
         for(int i =0; i<[mutatedkCBAdvDataServiceUUIDsArray count]; i++) {
             NSString *serviceUUID = [NSString stringWithFormat:@"%@",[mutatedkCBAdvDataServiceUUIDsArray objectAtIndex:i]];
-            
             if([serviceUUID length] == 4) {
                 length += 2;
-                serviceType = ServiceData16bitUUID;
+                serviceType = kServiceData16bitUUID;
                 [uuid appendString:[Util reverseServiceUUID:serviceUUID]];
             } else if([serviceUUID length] == 8) {
                 length += 4;
-                serviceType = ServiceData32bitUUID;
+                serviceType = kServiceData32bitUUID;
                 serviceUUID = [serviceUUID stringByReplacingOccurrencesOfString:@"-" withString:@""];
                 [uuid appendString:[Util reverseServiceUUID:serviceUUID]];
             } else if([serviceUUID length] == 36) {
                 length += 16;
-                serviceType = ServiceData128bitUUID;
+                serviceType = kServiceData128bitUUID;
                 serviceUUID = [serviceUUID stringByReplacingOccurrencesOfString:@"-" withString:@""];
                 [uuid appendString:[Util reverseServiceUUID:serviceUUID]];
             }
-           
         }
         if(length > 0 && [serviceType length] > 0 && [uuid length] > 0) {
             [advData appendString:[NSString stringWithFormat:@"%02x",length+1]];
@@ -282,6 +281,17 @@ static NSString *sCBUUID;
     if(kCBAdvertisementDataServiceDataDictionary)
     {
         NSDictionary *mutatedkCBAdvertisementDataServiceDataDictionary = [Util collectionOfServiceAdvertismentData:kCBAdvertisementDataServiceDataDictionary];
+        NSString *serviceUUIDString;
+        for(CBUUID *service in kCBAdvertisementDataServiceDataDictionary) {
+            serviceUUIDString = service.UUIDString;
+        }
+        if(serviceUUIDString) {
+            NSString * servcieData = [mutatedkCBAdvertisementDataServiceDataDictionary valueForKey:serviceUUIDString];
+            int dataLength = (int)[servcieData length]/2 + 3;
+            [advData appendString:[[NSString stringWithFormat:@"%02x", dataLength] uppercaseString]];
+            [advData appendString:kServiceData];
+            [advData appendString:[[NSString stringWithFormat:@"%@%@",[Util reverseServiceUUID:serviceUUIDString],servcieData] uppercaseString]];
+        }
     }
     
     //---CBAdvertisementDataOverflowServiceUUIDsKey
@@ -302,8 +312,7 @@ static NSString *sCBUUID;
     NSNumber *kCBAdvertisementDataIsConnectableValue = [advertisementData objectForKey:@"kCBAdvDataIsConnectable"];
     
     [advData appendString:[NSString stringWithFormat:@"%02x",2]];
-    [advData appendString:ADFlags];
-    
+    [advData appendString:kADFlags];
     [advData appendString:[NSString stringWithFormat:@"%02x",[kCBAdvertisementDataIsConnectableValue intValue]]];
     
     //--CBAdvertisementDataTxPowerLevelKey
@@ -312,12 +321,11 @@ static NSString *sCBUUID;
     {
         NSString *powerKey = [kCBAdvertisementDataTxPowerLevelKey stringValue];
         [advData appendString:[NSString stringWithFormat:@"%02x",(unsigned int)[powerKey length]+1]];
-        [advData appendString:TxPowerLevel];
+        [advData appendString:kTxPowerLevel];
         if([powerKey intValue] < 10 && [powerKey intValue] >= 0)
             [advData appendString:[NSString stringWithFormat:@"0%@",powerKey]];
         else
             [advData appendString:[NSString stringWithFormat:@"%@",powerKey]];
-        
     }
     
     [mutatedAdevertismentData setObject:advData forKeyedSubscript:kRawAdvertisementData];
@@ -330,13 +338,11 @@ static NSString *sCBUUID;
                                   kPeripheralName:peripheralNameString,
                                   kPeripheralBtAddress : btAddr};
     
-    
     response = @{kResult:kScanForPeripherals,
                  kParams:parameters};
     
     [_availableDevices addObject:peripheral];
     [self sendResponse:response];
-    
 }
 
 - (void)centralManager:(CBCentralManager *)central willRestoreState:(NSDictionary *)dict
@@ -444,6 +450,7 @@ static NSString *sCBUUID;
         return;
     }
     NSString *errorMessage = error.localizedDescription;
+    //TODO: additional fields in params to be documented
     parameters = @{kPeripheralUUID:peripheralUUIDString,
                    kServiceUUID:serviceUUIDString};
     response = @{kResult:kGetCharacteristics,
@@ -458,6 +465,7 @@ static NSString *sCBUUID;
     NSDictionary *parameters;
     NSString *characteristicUUIDString  = [characteristic.UUID UUIDString];
     NSString *peripheralUUIDString = [peripheral.identifier UUIDString];
+    //NSString *serviceUUIDString = [characteristic.service.UUID UUIDString];
     if(!error)
     {
         NSArray  *descriptorArray = [Util listOfJsonDescriptorsFrom:characteristic.descriptors];
@@ -470,7 +478,12 @@ static NSString *sCBUUID;
         [self sendResponse:response];
         return;
     }
-    
+    /*parameters = @{kCharacteristicUUID:characteristicUUIDString,
+     kPeripheralUUID:peripheralUUIDString};
+     NSString *errorMessage = error.localizedDescription;
+     response = @{kResult:kGetDescriptors,
+     kParams:parameters,
+     kError:@{kCode:kError32603,kMessageField:errorMessage}};*/
     NSArray  *descriptorArray = [Util listOfJsonDescriptorsFrom:characteristic.descriptors];
     parameters = @{kCharacteristicUUID:characteristicUUIDString,
                    kPeripheralUUID:peripheralUUIDString,
@@ -680,7 +693,8 @@ static NSString *sCBUUID;
     _availableDevices = [[NSMutableArray alloc] init];
     _connectedPeripheralsCollection = [[NSMutableDictionary alloc] init];
     _previousRequests = [NSMutableArray new];
-    
+    _requestIDs = [NSMutableArray new];
+
     @try {
         NSDictionary *parameters = [request valueForKey:kParams];
         
@@ -705,7 +719,7 @@ static NSString *sCBUUID;
             self.centralManager.delegate = self;
             [self sendResponse:@{kResult:kConfigure}];
         } else {
-            [self invalidParameters:kConfigure];
+            [self invalidParameters:kConfigure requestId:NULL];
         }
     }
     @catch (NSException *exception) {
@@ -716,9 +730,10 @@ static NSString *sCBUUID;
 
 - (void)connect:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     if(![self isPoweredOn])
     {
-        [self sendReasonForFailedCall];
+        [self sendReasonForFailedCall:kConnect requestId:requestID];
         return;
     }
     
@@ -734,23 +749,22 @@ static NSString *sCBUUID;
             NSString *UUIDStringOfPeripheral = [peripheral.identifier UUIDString];
             if ([UUIDStringOfPeripheralToConnect isEqualToString:UUIDStringOfPeripheral])
             {
+                [self requestID:requestID withPeripheralUUID:UUIDStringOfPeripheralToConnect inMethod:kConnect];
                 [self.centralManager connectPeripheral:peripheral options:connectionOptions];
                 return;
             }
         }
-        
-        [self sendCharacteristicNotFoundErrorMessage];
     } else {
-        [self invalidParameters:kConnect];
+        [self invalidParameters:kConnect requestId:requestID];
     }
 }
 
 - (void)disconnect:(NSDictionary *)request
 {
-    
+    NSString *requestID = [self getRequestID:request];
     if(![self isPoweredOn])
     {
-        [self sendReasonForFailedCall];
+        [self sendReasonForFailedCall:kDisconnect requestId:requestID];
         return;
     }
     NSDictionary *parameters = [request valueForKey:kParams];
@@ -763,106 +777,13 @@ static NSString *sCBUUID;
             NSString *UUIDStringOfPeripheral = [peripheralIdentifier UUIDString];
             if ([UUIDStringOfPeripheralToDisconnect isEqualToString:UUIDStringOfPeripheral])
             {
+                [self requestID:requestID withPeripheralUUID:UUIDStringOfPeripheralToDisconnect inMethod:kDisconnect];
                 [self.centralManager cancelPeripheralConnection:peripheral];
                 return;
             }
         }
-        [self sendCharacteristicNotFoundErrorMessage];
     } else {
-        [self invalidParameters:kDisconnect];
-    }
-}
-
-- (void)getPerhipheralsWithServices:(NSDictionary *)request
-{
-    if(![self isPoweredOn])
-    {
-        [self sendReasonForFailedCall];
-        return;
-    }
-    
-    NSMutableDictionary *response = [[NSMutableDictionary alloc]init];
-    //extract the list of service UUID strings
-    NSDictionary *parameters = [request valueForKey:kParams];
-    if(parameters != nil) {
-        NSArray *listOfServiceUUIDStrings = [parameters objectForKey:kServiceUUIDs];
-        if(listOfServiceUUIDStrings.count == 0)
-        {
-            [self sendNoServiceSpecified];
-            return;
-        }
-        //construct the array of CBUUID Objects from the UUIDS given
-        NSArray *listOfServiceCBUUIDs = [Util listOfServiceCBUUIDObjectsFrom:listOfServiceUUIDStrings];
-        
-        //get the list of peripherals(actual CBPeripheral objects) with those services
-        NSArray *listOfPeripherals = [self.centralManager retrieveConnectedPeripheralsWithServices:listOfServiceCBUUIDs];
-        
-        //construct the response.
-        [response setObject:kResult forKey:kGetPerhipheralsWithServices];
-        NSMutableDictionary *peripheralsDictionary = [NSMutableDictionary new];
-        NSDictionary *peripheralDict ;
-        for (NSInteger itr = 0; itr < listOfPeripherals.count ; itr ++)
-        {
-            CBPeripheral *peripheral = [listOfPeripherals objectAtIndex:itr];
-            NSString *peripheralState = [Util peripheralStateStringFromPeripheralState:peripheral.state];
-            NSString *peripheralUUIDString = [Util peripheralUUIDStringFromPeripheral:peripheral];
-            peripheralDict = @{kStateField:peripheralState,kPeripheralUUID:peripheralUUIDString};
-            NSString *index = [NSString stringWithFormat:@"%ld",(long)itr];
-            [peripheralsDictionary setObject:peripheralDict forKey:index];
-        }
-        //set the key/value pair key is the string peripherals and value peripherals dictionary
-        [response setObject:peripheralDict forKey:kPeripherals];
-        [self sendResponse:response];
-    } else {
-        [self invalidParameters:kGetPerhipheralsWithServices];
-    }
-}
-
-- (void)getPerhipheralsWithIdentifiers:(NSDictionary *)request
-{
-    if(![self isPoweredOn])
-    {
-        [self sendReasonForFailedCall];
-        return;
-    }
-    
-    NSMutableDictionary *response = [[NSMutableDictionary alloc]init];
-    //extract the list of peripheral UUID strings
-    NSDictionary *parameters = [request valueForKey:kParams];
-    if(parameters != nil ) {
-        NSArray *listOfPeripheralUUIDStrings = [parameters objectForKey:kPeripheralUUIDs];
-        if(!listOfPeripheralUUIDStrings)
-        {
-            [self sendNoPeripheralsSpecified];
-            return;
-        }
-        //construct the array of NSUUID Objects from the UUIDS given
-        NSMutableArray *listOfPeriheralNSUUIDs = [[NSMutableArray alloc]init];
-        for (NSString *peripheralUUIDString in listOfPeripheralUUIDStrings)
-        {
-            NSUUID *aPeripheralUUID = [[NSUUID alloc]initWithUUIDString:peripheralUUIDString] ;
-            [listOfPeriheralNSUUIDs addObject:aPeripheralUUID];
-        }
-        //get the list of peripherals(actual CBPeripheral objects) with those services
-        NSArray *listOfPeripherals = [self.centralManager retrievePeripheralsWithIdentifiers:listOfPeriheralNSUUIDs];
-        //construct the response.
-        [response setObject:kResult forKey:kGetPerhipheralsWithIdentifiers];
-        NSMutableDictionary *peripheralsDictionary = [NSMutableDictionary new];
-        NSDictionary *peripheralDict;
-        for (NSInteger itr = 0; itr < listOfPeripherals.count ; itr ++)
-        {
-            CBPeripheral *peripheral = [listOfPeripherals objectAtIndex:itr];
-            NSString *peripheralState = [Util peripheralStateStringFromPeripheralState:peripheral.state];
-            NSString *peripheralUUIDString = [Util peripheralUUIDStringFromPeripheral:peripheral];
-            peripheralDict = @{kStateField:peripheralState,kPeripheralUUID:peripheralUUIDString};
-            NSNumber *index = [NSNumber numberWithLong:itr];
-            [peripheralsDictionary setObject:peripheralDict forKey:index];
-        }
-        //set the key/value pair key= peripherals and value peripherals dictionary
-        [response setObject:peripheralDict forKey:kPeripherals];
-        [self sendResponse:response];
-    } else {
-        [self invalidParameters:kGetPerhipheralsWithIdentifiers];
+        [self invalidParameters:kDisconnect requestId:requestID];
     }
 }
 
@@ -870,7 +791,7 @@ static NSString *sCBUUID;
 {
     if(![self isPoweredOn])
     {
-        [self sendReasonForFailedCall];
+        [self sendReasonForFailedCall:kScanForPeripherals requestId:NULL];
         return;
     }
     
@@ -911,7 +832,7 @@ static NSString *sCBUUID;
                 
                 isScanning = YES;
             } else {
-                [self invalidParameters:kScanForPeripherals];
+                [self invalidParameters:kScanForPeripherals requestId:NULL];
             }
         }
     }
@@ -926,7 +847,7 @@ static NSString *sCBUUID;
         [self.centralManager stopScan];
     } else
     {
-        [self sendReasonForFailedCall];
+        [self sendReasonForFailedCall:kStopScanning requestId:NULL];
     }
 }
 
@@ -954,13 +875,18 @@ static NSString *sCBUUID;
         [peripheralsDictionary setObject:peripheralDict forKey:indexNumber];
         index +=1;
     }
+    NSString *requestID = [self getRequestID:request];
+    if(requestID)
+        [response setValue:requestID forKey:kIdField];
     [response setObject:peripheralsDictionary forKey:kPeripherals];
+    [response setValue:kGetConnectedPeripherals forKey:kResult];
 }
 
 #pragma mark - Request Call Handlers For Peripheral Methdos
 
 - (void)getServices:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     NSDictionary *parameters = [request objectForKey:kParams];
     if(parameters != nil && [[parameters valueForKey:kPeripheralUUID] length] != 0) {
         NSString *peripheralUUIDString = [parameters valueForKey:kPeripheralUUID];
@@ -970,22 +896,23 @@ static NSString *sCBUUID;
         CBPeripheral *requestedPeripheral = [Util peripheralIn:_connectedPeripheralsCollection withNSUUID:peripheralIdentifier];
         if(!requestedPeripheral)
         {
-            [self sendPeripheralNotFoundErrorMessage];
+            [self sendPeripheralNotFoundErrorMessage:kGetServices requestId:requestID];
             return;
         }
         //get the list of CBUUIDS for the list of services to be searched for
         NSArray *serviceUUIDStrings = [parameters objectForKey:kServiceUUIDs];
         NSArray *serviceCBUUIDs = [Util listOfServiceCBUUIDObjectsFrom:serviceUUIDStrings];
-        
+        [self requestID:requestID withPeripheralUUID:[[requestedPeripheral identifier] UUIDString] inMethod:kGetServices];
         //make the CB call on the service to search for the services
         [requestedPeripheral discoverServices:serviceCBUUIDs];
     } else {
-        [self invalidParameters:kGetServices];
+        [self invalidParameters:kGetServices requestId:requestID];
     }
 }
 
 - (void)getIncludedServices:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     NSDictionary *parameters = [request objectForKey:kParams];
     if(parameters != nil && [[parameters valueForKey:kServiceUUID] length] != 0) {
         //find the service  in which the search for the included services is going to happen and the peipheral to search in
@@ -995,27 +922,28 @@ static NSString *sCBUUID;
         CBPeripheral *requestedPeripheral = [requestedPeripheralAndService objectForKey:peripheralKey];
         if(!requestedPeripheral)
         {
-            [self sendPeripheralNotFoundErrorMessage];
+            [self sendPeripheralNotFoundErrorMessage:kGetIncludedServices requestId:requestID];
             return;
         }
         CBService *requestedService = [requestedPeripheralAndService objectForKey:serviceKey];
         if(!requestedService)
         {
-            [self sendServiceNotFoundErrorMessage];
+            [self sendServiceNotFoundErrorMessage:kGetIncludedServices requestId:requestID];
             return;
         }
         //get the list of CBUUIDs - array of included services to be searched for
         NSArray *includedServicesUUIDStrings = [parameters objectForKey:kIncludedServiceUUIDs];
         NSArray *includedServicesCBUUIDs = [Util listOfServiceCBUUIDObjectsFrom:includedServicesUUIDStrings];
-        
+        [self requestID:requestID withPeripheralUUID:[[requestedPeripheral identifier] UUIDString] inMethod:kGetIncludedServices];
         [requestedPeripheral discoverIncludedServices:includedServicesCBUUIDs forService:requestedService];
     } else {
-        [self invalidParameters:kGetIncludedServices];
+        [self invalidParameters:kGetIncludedServices requestId:requestID];
     }
 }
 
 - (void)getCharacteristics:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     NSDictionary *parameters = [request objectForKey:kParams];
     if(parameters != nil && [[parameters valueForKey:kServiceUUID] length] != 0) {
         //find the service  in which the search for the included services is going to happen and the peipheral to search in
@@ -1026,26 +954,28 @@ static NSString *sCBUUID;
         CBPeripheral *requestedPeripheral = [requestedPeripheralAndService objectForKey:peripheralKey];
         if(!requestedPeripheral)
         {
-            [self sendPeripheralNotFoundErrorMessage];
+            [self sendPeripheralNotFoundErrorMessage:kGetCharacteristics requestId:requestID];
             return;
         }
         CBService *requestedService = [requestedPeripheralAndService objectForKey:serviceKey];
         if(!requestedService)
         {
-            [self sendServiceNotFoundErrorMessage];
+            [self sendServiceNotFoundErrorMessage:kGetCharacteristics requestId:requestID];
+
             return;
         }
         NSArray *listOfCharacteristicUUIDStrings = [parameters objectForKey:kCharacteristicUUIDs];
         NSArray *listOfCharacteristicCBUUIDs = [Util listOfServiceCBUUIDObjectsFrom:listOfCharacteristicUUIDStrings];
-        
+        [self requestID:requestID withPeripheralUUID:[[requestedPeripheral identifier] UUIDString] inMethod:kGetCharacteristics];
         [requestedPeripheral discoverCharacteristics:listOfCharacteristicCBUUIDs forService:requestedService];
     } else {
-        [self invalidParameters:kGetCharacteristics];
+        [self invalidParameters:kGetCharacteristics requestId:requestID];
     }
 }
 
 - (void)getDescriptors:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     NSDictionary *parameters = [request objectForKey:kParams];
     if(parameters != nil && [[parameters objectForKey:kCharacteristicUUID] length] != 0) {
         NSString *characteristicsUUIDString = [parameters objectForKey:kCharacteristicUUID];
@@ -1054,19 +984,20 @@ static NSString *sCBUUID;
         CBCharacteristic  *requestedCharacteristic = [peripheralAndCharacteristic objectForKey:characteristicKey];
         if(!requestedCharacteristic)
         {
-            [self sendCharacteristicNotFoundErrorMessage ];
+            [self sendCharacteristicNotFoundErrorMessage:kGetDescriptors requestId:requestID];
             return;
         }
         CBPeripheral *requestedPeripheral = [peripheralAndCharacteristic objectForKey:peripheralKey];
-        
+        [self requestID:requestID withPeripheralUUID:[[requestedPeripheral identifier] UUIDString] inMethod:kGetDescriptors];
         [requestedPeripheral discoverDescriptorsForCharacteristic:requestedCharacteristic];
     } else {
-        [self invalidParameters:kGetDescriptors];
+        [self invalidParameters:kGetDescriptors requestId:requestID];
     }
 }
 
 - (void)getCharacteristicValue:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     NSDictionary *parameters = [request objectForKey:kParams];
     if(parameters != nil && [[parameters objectForKey:kCharacteristicUUID] length] != 0) {
         NSString *characteristicsUUIDString = [parameters objectForKey:kCharacteristicUUID];
@@ -1075,19 +1006,20 @@ static NSString *sCBUUID;
         CBCharacteristic  *requestedCharacteristic = [peripheralAndCharacteristic objectForKey:characteristicKey];
         if(!requestedCharacteristic)
         {
-            [self sendCharacteristicNotFoundErrorMessage ];
+            [self sendCharacteristicNotFoundErrorMessage:kGetCharacteristicValue requestId:requestID];
             return;
         }
         CBPeripheral *requestedPeripheral = [peripheralAndCharacteristic objectForKey:peripheralKey];
-        
+        [self requestID:requestID withPeripheralUUID:[[requestedPeripheral identifier] UUIDString] inMethod:kGetCharacteristicValue];
         [requestedPeripheral readValueForCharacteristic:requestedCharacteristic];
     } else {
-        [self invalidParameters:kGetCharacteristicValue];
+        [self invalidParameters:kGetCharacteristicValue requestId:requestID];
     }
 }
 
 - (void)writeCharacteristicValue:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     NSDictionary *parameters = [request objectForKey:kParams];
     if(parameters != nil && [[parameters objectForKey:kCharacteristicUUID] length] != 0 && [[parameters valueForKey:kValue] length] != 0) {
         NSString *characteristicsUUIDString = [parameters objectForKey:kCharacteristicUUID];
@@ -1096,32 +1028,37 @@ static NSString *sCBUUID;
         CBCharacteristic  *requestedCharacteristic = [peripheralAndCharacteristic objectForKey:characteristicKey];
         if(!requestedCharacteristic)
         {
-            [self sendCharacteristicNotFoundErrorMessage ];
+            [self sendCharacteristicNotFoundErrorMessage:kWriteCharacteristicValue requestId:requestID];
             return;
         }
         if([[parameters valueForKey:kValue] length]%2 != 0){
-            NSDictionary *response;
+            NSMutableDictionary *response = [NSMutableDictionary new];
             NSString *errorMessage = @"The value's length is invalid.";
             parameters = @{kCharacteristicUUID:characteristicsUUIDString};
-            response = @{kResult:kGetCharacteristicValue,
-                     kParams:parameters,
-                     kError:@{kCode:kError32603,kMessageField:errorMessage}};
-            [self sendResponse:response];
+            NSDictionary *errorResponse = @{kCode:kError32603,kMessageField:errorMessage};
+            [response setValue:kWriteCharacteristicValue forKey:kResult];
+            [response setObject:parameters forKey:kParams];
+            [response setObject:errorResponse forKey:kError];
+            if(requestID)
+                [response setValue:requestID forKey:kIdField];
+              [self sendResponse:response];
             return;
         }
         CBPeripheral *requestedPeripheral = [peripheralAndCharacteristic objectForKey:peripheralKey];
+        //TODO we neeed to handle writetype once we set the value for writetype on JS
         CBCharacteristicWriteType writeType = [Util writeTypeForCharacteristicGiven:[parameters valueForKey:kWriteType]];
-        
+        [self requestID:requestID withPeripheralUUID:[[requestedPeripheral identifier] UUIDString] inMethod:kWriteCharacteristicValue];
         NSData *dataToWrite = [Util hexToNSData:[parameters valueForKey:kValue]];
         
         [requestedPeripheral writeValue:dataToWrite forCharacteristic:requestedCharacteristic type:writeType];
     } else {
-        [self invalidParameters:kWriteCharacteristicValue];
+        [self invalidParameters:kWriteCharacteristicValue requestId:requestID];
     }
 }
 
 - (void)getDescriptorValue:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     NSDictionary *parameters = [request objectForKey:kParams];
     if(parameters != nil && [[parameters objectForKey:kDescriptorUUID] length] != 0) {
         NSString *descriptorUUIDString = [parameters objectForKey:kDescriptorUUID];
@@ -1130,19 +1067,20 @@ static NSString *sCBUUID;
         CBDescriptor *requestedDescriptor = [descriptorAndCharacteristic objectForKey:descriptorKey];
         if(!requestedDescriptor)
         {
-            [self sendDescriptorNotFoundErrorMessage];
+            [self sendDescriptorNotFoundErrorMessage:kGetDescriptorValue requestId:requestID];
             return;
         }
         CBPeripheral *requestedPeripheral = [descriptorAndCharacteristic objectForKey:peripheralKey];
-        
+        [self requestID:requestID withPeripheralUUID:[[requestedPeripheral identifier] UUIDString] inMethod:kGetDescriptorValue];
         [requestedPeripheral readValueForDescriptor:requestedDescriptor];
     } else {
-        [self invalidParameters:kGetDescriptorValue];
+        [self invalidParameters:kGetDescriptorValue requestId:requestID];
     }
 }
 
 - (void)writeDescriptorValue:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     NSDictionary *parameters = [request objectForKey:kParams];
     if(parameters != nil && [[parameters objectForKey:descriptorKey] length] != 0) {
         NSString *descriptorUUIDString = [parameters objectForKey:descriptorKey];
@@ -1151,15 +1089,15 @@ static NSString *sCBUUID;
         CBDescriptor *requestedDescriptor = [descriptorAndCharacteristic objectForKey:kDescriptorUUID];
         if(!requestedDescriptor)
         {
-            [self sendDescriptorNotFoundErrorMessage];
+            [self sendDescriptorNotFoundErrorMessage:kWriteDescriptorValue requestId:requestID];
             return;
         }
         CBPeripheral *requestedPeripheral = [descriptorAndCharacteristic objectForKey:peripheralKey];
-        
+        [self requestID:requestID withPeripheralUUID:[[requestedPeripheral identifier] UUIDString] inMethod:kWriteDescriptorValue];
         NSData *dataToWrite = [Util hexToNSData:[parameters valueForKey:kValue]];
         [requestedPeripheral writeValue:dataToWrite forDescriptor:requestedDescriptor];
     } else {
-        [self invalidParameters:kWriteDescriptorValue];
+        [self invalidParameters:kWriteDescriptorValue requestId:requestID];
     }
 }
 
@@ -1174,19 +1112,20 @@ static NSString *sCBUUID;
         CBCharacteristic *requstedCharacteristc = [requstedCharacteristicAndPeipheral objectForKey:characteristicKey];
         if(!requstedCharacteristc )
         {
-            [self sendCharacteristicNotFoundErrorMessage];
+            [self sendCharacteristicNotFoundErrorMessage:kSetValueNotification requestId:NULL];
             return;
         }
         CBPeripheral *requestedPeripheral  = [requstedCharacteristicAndPeipheral objectForKey:peripheralKey];
         
         [requestedPeripheral  setNotifyValue:subscribe forCharacteristic:requstedCharacteristc];
     } else {
-        [self invalidParameters:kSetValueNotification];
+        [self invalidParameters:kSetValueNotification requestId:NULL];
     }
 }
 
 - (void)getPeripheralState:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     NSDictionary *parameters =[request objectForKey:kParams];
     if(parameters != nil && [[parameters objectForKey:kPeripheralUUID] length] != 0) {
         NSString *peripheralUUIDString = [parameters objectForKey:kPeripheralUUID];
@@ -1196,20 +1135,24 @@ static NSString *sCBUUID;
         CBPeripheral *requestedPeripheral = [Util peripheralIn:_connectedPeripheralsCollection withNSUUID:peripheralIdentifier];
         if(!requestedPeripheral)
         {
-            [self sendPeripheralNotFoundErrorMessage];
+            [self sendPeripheralNotFoundErrorMessage:kGetPeripheralState requestId:requestID];
             return;
         }
         NSString *peripheralState = [Util peripheralStateStringFromPeripheralState:requestedPeripheral.state];
-        NSDictionary *response = @{kStateField:peripheralState,
-                                   kResult:kGetPeripheralState};
+        NSMutableDictionary *response = [[NSMutableDictionary alloc] init];
+        [response setValue:peripheralState forKey:kStateField];
+        if(requestID)
+            [response setValue:requestID forKey:kIdField];
+        [response setValue:kGetPeripheralState forKey:kResult];
         [self sendResponse:response];
     } else {
-        [self invalidParameters:kGetPeripheralState];
+        [self invalidParameters:kGetPeripheralState requestId:requestID];
     }
 }
 
 - (void)getRSSI:(NSDictionary *)request
 {
+    NSString *requestID = [self getRequestID:request];
     NSDictionary *parameters =[request objectForKey:kParams];
     if(parameters != nil && [[parameters objectForKey:kPeripheralUUID] length] != 0) {
         NSString *peripheralUUIDString = [parameters objectForKey:kPeripheralUUID];
@@ -1218,12 +1161,13 @@ static NSString *sCBUUID;
         CBPeripheral *requestedPeripheral = [Util peripheralIn:_connectedPeripheralsCollection withNSUUID:peripheralIdentifier];
         if(!requestedPeripheral)
         {
-            [self sendPeripheralNotFoundErrorMessage];
+            [self sendPeripheralNotFoundErrorMessage:kGetRSSI requestId:requestID];
             return;
         }
+        [self requestID:requestID withPeripheralUUID:[[requestedPeripheral identifier] UUIDString] inMethod:kGetRSSI];
         [requestedPeripheral readRSSI];
     } else {
-        [self invalidParameters:kGetRSSI];
+        [self invalidParameters:kGetRSSI requestId:requestID];
     }
 }
 
@@ -1241,6 +1185,20 @@ static NSString *sCBUUID;
     NSMutableDictionary *kkResultDict = [NSMutableDictionary dictionary];
     [kkResultDict setValue:kJsonrpcVersion forKey:kJsonrpc];
     [kkResultDict addEntriesFromDictionary:responseDictionary];
+    //sending request id's
+    if([kkResultDict valueForKey:kResult]) {
+        NSString *result = [kkResultDict valueForKey:kResult];
+        for(int i = 0; i < [_requestIDs count]; i++) {
+            NSDictionary *dict = [_requestIDs objectAtIndex:i];
+            NSDictionary *idDict = [dict objectForKey:result];
+            NSString *requestId = [[idDict allKeys] objectAtIndex:0];
+            if([[[kkResultDict valueForKey:kParams] valueForKey:kPeripheralUUID] isEqualToString:[idDict valueForKey:requestId]]) {
+                [kkResultDict setValue:requestId forKey:kIdField];
+                [_requestIDs removeObjectAtIndex:i];
+                break;
+            }
+        }
+    }
     if(!_delegate)
     {
         return;
@@ -1275,75 +1233,90 @@ static NSString *sCBUUID;
     return NO;
 }
 
-- (void)sendReasonForFailedCall
+- (void)sendReasonForFailedCall:(NSString *)method requestId:(NSString *)requestId
 {
-    NSDictionary* responseDictionary = @{ kError: @{kCode:kError32005}};
-    [self sendResponse:responseDictionary];
-}
-
-- (void)sendPeripheralNotFoundErrorMessage
-{
+    
     NSMutableDictionary *response = [NSMutableDictionary new];
-    [response setObject:kJsonrpcVersion forKey:kJsonrpc];
-    NSDictionary *errorResponse = @{kError:@{kCode:kError32001}};
+    [response setValue:method forKey:kResult];
+    if(requestId)
+        [response setValue:requestId forKey:kIdField];
+    NSDictionary *errorResponse = @{kError:@{kCode:kError32005,kMessageField:@"Device not powered on."}};
     [response addEntriesFromDictionary:errorResponse];
-    [self sendResponse:response];
-}
-
-- (void)sendServiceNotFoundErrorMessage
-{
-    NSMutableDictionary *response = [NSMutableDictionary new];
-    [response setObject:kJsonrpcVersion forKey:kJsonrpc];
-    NSDictionary *errorResponse = @{kError:@{kCode:kError32002}};
-    [response addEntriesFromDictionary:errorResponse];
-    [self sendResponse:response];
-}
-
-- (void)sendCharacteristicNotFoundErrorMessage
-{
-    NSMutableDictionary *response = [NSMutableDictionary new];
-    [response setObject:kJsonrpcVersion forKey:kJsonrpc];
-    NSDictionary *errorResponse = @{kError:@{kCode:kError32003}};
-    [response addEntriesFromDictionary:errorResponse];
-    [self sendResponse:response];
-}
-
-- (void)sendDescriptorNotFoundErrorMessage
-{
-    NSMutableDictionary *response = [NSMutableDictionary new];
-    [response setObject:kJsonrpcVersion forKey:kJsonrpc];
-    NSDictionary *errorResponse = @{kError:@{kCode:kError32004}};
-    [response addEntriesFromDictionary:errorResponse];
-    [self sendResponse:response];
-}
-
-- (void)sendNoServiceSpecified
-{
-    NSMutableDictionary *response = [NSMutableDictionary new];
-    [response setObject:kJsonrpcVersion forKey:kJsonrpc];
-    NSDictionary *errorResponse = @{kError:@{kCode:kError32006}};
-    [response addEntriesFromDictionary:errorResponse];
-    [self sendResponse:response];
-}
-
-- (void)sendNoPeripheralsSpecified
-{
-    NSMutableDictionary *response = [NSMutableDictionary new];
-    [response setObject:kJsonrpcVersion forKey:kJsonrpc];
-    NSDictionary *errorResponse = @{kError:@{kCode:kError32007}};
-    [response addEntriesFromDictionary:errorResponse];
-    [self sendResponse:response];
-}
-
--(void)invalidParameters:(NSString *)method
-{
-    NSMutableDictionary *response = [NSMutableDictionary new];
-    [response setObject:kJsonrpcVersion forKey:kJsonrpc];
-    [response setObject:method forKey:kResult];
-    NSDictionary *errorResponse = @{kCode:kInvalidParams};
-    [response setObject:errorResponse forKey:kError];
     [self sendResponse:response];
     
+}
+
+- (void)sendPeripheralNotFoundErrorMessage:(NSString *)method requestId:(NSString *)requestId
+{
+    NSMutableDictionary *response = [NSMutableDictionary new];
+    [response setValue:method forKey:kResult];
+    if(requestId)
+        [response setValue:requestId forKey:kIdField];
+    NSDictionary *errorResponse = @{kError:@{kCode:kError32001,kMessageField:@"Peripheral not found."}};
+    [response addEntriesFromDictionary:errorResponse];
+    [self sendResponse:response];
+}
+
+- (void)sendServiceNotFoundErrorMessage:(NSString *)method requestId:(NSString *)requestId
+{
+    NSMutableDictionary *response = [NSMutableDictionary new];
+    [response setValue:method forKey:kResult];
+    if(requestId)
+        [response setValue:requestId forKey:kIdField];
+    NSDictionary *errorResponse = @{kError:@{kCode:kError32002,kMessageField:@"Service not found."}};
+    [response addEntriesFromDictionary:errorResponse];
+    [self sendResponse:response];
+}
+
+
+- (void)sendCharacteristicNotFoundErrorMessage:(NSString *)method requestId:(NSString *)requestId
+{
+    NSMutableDictionary *response = [NSMutableDictionary new];
+    [response setValue:method forKey:kResult];
+    if(requestId)
+        [response setValue:requestId forKey:kIdField];
+    NSDictionary *errorResponse = @{kError:@{kCode:kError32003,kMessageField:@"Characteristic not found."}};
+    [response addEntriesFromDictionary:errorResponse];
+    [self sendResponse:response];
+}
+
+- (void)sendDescriptorNotFoundErrorMessage:(NSString *)method requestId:(NSString *)requestId
+{
+    NSMutableDictionary *response = [NSMutableDictionary new];
+    [response setValue:method forKey:kResult];
+    if(requestId)
+        [response setValue:requestId forKey:kIdField];
+    NSDictionary *errorResponse = @{kError:@{kCode:kError32004,kMessageField:@"Specified Descriptor not found."}};
+    [response addEntriesFromDictionary:errorResponse];
+    [self sendResponse:response];
+}
+
+-(void)invalidParameters:(NSString *)method requestId:(NSString *)requestId
+{
+    NSMutableDictionary *response = [NSMutableDictionary new];
+    [response setValue:method forKey:kResult];
+    if(requestId) {
+        [response setValue:requestId forKey:kIdField];
+    }
+    NSDictionary *errorResponse = @{kCode:kInvalidParams,kMessageField:@"Insufficient parameters."};
+    [response setObject:errorResponse forKey:kError];
+    [self sendResponse:response];
+}
+
+-(void)requestID:(NSString *)requestId withPeripheralUUID:(NSString *)peripheralUUID inMethod:(NSString *)method {
+    if(requestId) {
+        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+        [dict setValue:peripheralUUID forKey:requestId];
+        NSDictionary *senderDict = @{method:dict};
+        [_requestIDs addObject:senderDict];
+    }
+}
+
+-(NSString *)getRequestID:(NSDictionary *)request {
+    NSString *requestID = NULL;
+    if([request valueForKey:kIdField])
+        requestID = [request valueForKey:kIdField];
+    return requestID;
 }
 
 -(void)dealloc {

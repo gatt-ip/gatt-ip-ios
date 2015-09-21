@@ -133,17 +133,19 @@ static NSString * const kPoweredOff                       = @"co";
 static NSString * const kPoweredOn                        = @"cp";
 
 //Advertising Data Types
-static NSString * const ADFlags                         = @"01";
-static NSString * const ShortLocalName              = @"08";
-static NSString * const CompleteLocalName          = @"09";
-static NSString * const TxPowerLevel                  = @"0A";
-static NSString * const Listof16bitServiceSolicitationUUIDs  = @"14";
-static NSString * const Listof32bitServiceSolicitationUUIDs  = @"1F";
-static NSString * const Listof128bitServiceSolicitationUUIDs = @"15";
-static NSString * const ServiceData16bitUUID  = @"02";
-static NSString * const ServiceData32bitUUID = @"04";
-static NSString * const ServiceData128bitUUID  = @"06";
-static NSString * const ManufacturerSpecificData = @"FF";
+static NSString * const kADFlags                         = @"01";
+static NSString * const kShortLocalName              = @"08";
+static NSString * const kCompleteLocalName          = @"09";
+static NSString * const kTxPowerLevel                  = @"0A";
+static NSString * const kListof16bitServiceSolicitationUUIDs  = @"14";
+static NSString * const kListof32bitServiceSolicitationUUIDs  = @"1F";
+static NSString * const kListof128bitServiceSolicitationUUIDs = @"15";
+static NSString * const kServiceData16bitUUID  = @"02";
+static NSString * const kServiceData32bitUUID = @"04";
+static NSString * const kServiceData128bitUUID  = @"06";
+static NSString * const kManufacturerSpecificData = @"FF";
+static NSString * const kServiceData                     = @"16";
+
 
 
 //----------------------------------------- Error Values ------------------------------------------------
