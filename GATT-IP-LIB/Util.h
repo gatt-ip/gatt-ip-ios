@@ -64,8 +64,6 @@ static NSString * const descriptorKey = @"descriptor";//@"descriptor";
 
 + (CBCharacteristicWriteType )writeTypeForCharacteristicGiven:(NSString *)stringWriteType;
 
-+ (NSString *)humanReadableFormatFromHex:(NSString *)hexString;
-
 + (NSArray *)listOfServiceUUIDStrings:(NSArray *)input;
 
 +(NSString *)reverseServiceUUID:(NSString *)serviceUUID;
