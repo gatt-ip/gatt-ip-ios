@@ -26,14 +26,13 @@
 #import "Util.h"
 #import <CoreBluetooth/CoreBluetooth.h>
 
-NSInteger MAX_NUMBER_OF_REQUESTS = 60 ;
+
 
 @interface GATTIP () <CBCentralManagerDelegate,CBPeripheralDelegate>
 
 @property CBCentralManager *centralManager;
 @property NSMutableArray *availableDevices;
 @property NSMutableDictionary *connectedPeripheralsCollection;
-@property NSMutableArray *previousRequests;
 @property NSMutableArray *requestIDs;
 
 @end
@@ -82,8 +81,6 @@ static NSString *sCBUUID;
     
     for (NSDictionary *request in requests)
     {
-        [self handleLoggingRequestAndResponse:request];
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"GotNewMessage" object: nil];
         if([[request valueForKey:kMethod] isEqualToString:kConfigure])
         {
             [self configure:request];
@@ -363,24 +360,11 @@ static NSString *sCBUUID;
         NSArray *mutatedkCBCentralManagerRestoredStateScanServiceArray = [Util listOfServiceUUIDStrings:kCBCentralManagerRestoredStateScanServiceArray];
         [mutatedDict setObject:mutatedkCBCentralManagerRestoredStateScanServiceArray forKey:kCBCentralManagerRestoredStateScanServicesKey];
     }
-    
-    //CBCentralManagerRestoredStateScanOptionsKey
-    
-    NSDictionary *parameters = @{kStateInfo:mutatedDict};
-    NSDictionary *response = @{kResult:kCentralState,
-                               kParams:parameters};
-    
-    [self sendResponse:response];
 }
 
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central
 {
-    CBCentralManagerState centeralState = central.state;
-    NSString *stateString = [Util centralStateStringFromCentralState:centeralState];
-    NSDictionary *parameters = @{kState:stateString};
-    NSDictionary *response = @{kParams:parameters,
-                               kResult:kCentralState};
-    [self sendResponse:response];
+
 }
 
 #pragma mark - Perhipheral Delegate Methods
@@ -406,6 +390,7 @@ static NSString *sCBUUID;
     response = @{kResult:kGetIncludedServices,
                  kParams:parameters,
                  kError:@{kCode:kError32603,kMessageField:erroMessage}};
+    
     [self sendResponse:response];
 }
 
@@ -691,8 +676,7 @@ static NSString *sCBUUID;
 - (void)configure:(NSDictionary *)request
 {
     _availableDevices = [[NSMutableArray alloc] init];
-    _connectedPeripheralsCollection = [[NSMutableDictionary alloc] init];
-    _previousRequests = [NSMutableArray new];
+    _connectedPeripheralsCollection = [[NSMutableDictionary alloc] init];   
     _requestIDs = [NSMutableArray new];
 
     @try {
@@ -853,9 +837,10 @@ static NSString *sCBUUID;
 
 - (void)getCentralState:(NSDictionary *)request
 {
-    NSString *stateOfCentral = [Util centralStateStringFromCentralState:self.centralManager.state];
-    NSDictionary *response = @{kResult:kCentralState,
-                               kStateField:stateOfCentral};
+    NSString *centralState = [Util centralStateStringFromCentralState:self.centralManager.state];
+    NSDictionary *parameters = @{kState:centralState};
+    NSDictionary *response = @{kParams:parameters,
+                                   kResult:kCentralState};
     
     [self sendResponse:response];
 }
@@ -1180,8 +1165,6 @@ static NSString *sCBUUID;
  */
 - (void)sendResponse:(NSDictionary *)responseDictionary
 {
-    [self handleLoggingRequestAndResponse:responseDictionary];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"GotNewMessage" object: nil];
     NSMutableDictionary *kkResultDict = [NSMutableDictionary dictionary];
     [kkResultDict setValue:kJsonrpcVersion forKey:kJsonrpc];
     [kkResultDict addEntriesFromDictionary:responseDictionary];
@@ -1328,59 +1311,6 @@ static NSString *sCBUUID;
     self.centralManager = nil;
 }
 
-#pragma mark - Helpers
-/**
- *  Converts the hex string fields to the
- *
- *  @param input (the input Dictionary from which the human Readable Dictionary is going to be formed from
- *
- *  @return the dictionary which is converted to the human Readable Format.
- */
-- (NSMutableDictionary *)convertToHumanReadableFormat:(NSDictionary *)input
-{
-    NSMutableDictionary *outputRespnose = [NSMutableDictionary new];
-    NSArray *allKeysForResponse = [input allKeys];
-    NSString *humanReadableKey ;
-    //convert all the keys(keys that don't need conversion will just stay the same since they are setup in that way in the humanReadableFormatFromHex dic
-    //we also convert the values that need conversion while we convert the keys.
-    for (NSString *key in allKeysForResponse)
-    {
-        id value = [input objectForKey:key];
-        humanReadableKey = [Util humanReadableFormatFromHex:key];
-        if([value isKindOfClass:[NSString class]])
-        {
-            NSString *humanReadableValue = value;
-            humanReadableValue =  [Util humanReadableFormatFromHex:value];
-            [outputRespnose setObject:humanReadableValue forKey:humanReadableKey];
-        }
-        else if([value isKindOfClass:[NSDictionary class]])
-        {
-            NSDictionary *humanReadableValue ;
-            humanReadableValue = [self convertToHumanReadableFormat:value];
-            [outputRespnose setObject:humanReadableValue forKey:humanReadableKey];
-        }
-        else
-        {
-            NSDictionary *humanReadableValue  = value;
-            [outputRespnose setObject:humanReadableValue forKey:humanReadableKey];
-        }
-    }
-    return outputRespnose;
-}
 
-- (void)handleLoggingRequestAndResponse:(NSDictionary *)input
-{
-    if(_previousRequests.count > MAX_NUMBER_OF_REQUESTS)
-    {
-        NSIndexSet *setOfIndeciesToRemove = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0,floor(MAX_NUMBER_OF_REQUESTS/4.0f))];
-        [_previousRequests removeObjectsAtIndexes:setOfIndeciesToRemove];
-    }
-    [_previousRequests addObject:[self convertToHumanReadableFormat:input]];
-}
-
-- (NSArray *)listOFResponseAndRequests
-{
-    return _previousRequests;
-}
 
 @end

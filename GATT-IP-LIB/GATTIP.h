@@ -178,6 +178,4 @@ static NSString * const kParseError                     = @"-32700";
 
 - (void)request:(NSData *)gattipMesg;
 
-- (NSArray *)listOFResponseAndRequests;
-
 @end

@@ -26,15 +26,21 @@
 @implementation Util
 + (NSString *)peripheralStateStringFromPeripheralState:(CBPeripheralState )peripheralState
 {
+    NSString *state_string;
+    
     switch (peripheralState)
     {
         case CBPeripheralStateDisconnected:
-            return kDisconnected;
+            state_string = kDisconnected;
         case CBPeripheralStateConnecting:
-            return kConnecting;
+            state_string = kConnecting;
         case CBPeripheralStateConnected :
-            return kConnected;
+            state_string = kConnected;
+        default:
+            state_string = @"Uknown";
     }
+    
+    return state_string;
 }
 
 + ( NSString *)centralStateStringFromCentralState:(CBCentralManagerState )centralState
@@ -285,105 +291,6 @@
         return CBCharacteristicWriteWithoutResponse;
     }
     return CBCharacteristicWriteWithResponse;
-}
-
-+ (NSString *)humanReadableFormatFromHex:(NSString *)hexString
-{
-    NSDictionary *methods =  @{kConfigure:@"Configure",
-                               kScanForPeripherals:@"ScanForPeripherals",
-                               kStopScanning:@"StopScanning",
-                               kConnect:@"Connect",
-                               kDisconnect:@"Disconnect",
-                               kCentralState:@"CentralState",
-                               kGetConnectedPeripherals:@"GetConnectedPeripherals",
-                               kGetPerhipheralsWithServices:@"GetPerhipheralsWithServices",
-                               kGetPerhipheralsWithIdentifiers:@"GetPerhipheralsWithIdentifiers",
-                               kGetServices:@"GetServices",
-                               kGetIncludedServices:@"GetIncludedServices",
-                               kGetCharacteristics:@"GetCharacteristics",
-                               kGetDescriptors:@"GetDescriptors",
-                               kGetCharacteristicValue:@"GetCharacteristicValue",
-                               kGetDescriptorValue:@"GetDescriptorValue",
-                               kWriteCharacteristicValue:@"WriteCharacteristicValue",
-                               kWriteDescriptorValue :@"WriteDescriptorValue",
-                               kSetValueNotification:@"SetValueNotification",
-                               kGetPeripheralState:@"GetPeripheralState",
-                               kGetRSSI:@"GetRSSI",
-                               kInvalidatedServices:@"InvalidatedServices",
-                               kPeripheralNameUpdate:@"peripheralNameUpdate",
-                               };
-    NSDictionary *keys = @{kCentralUUID:@"centralUUID",
-                           kPeripheralUUID:@"peripheralUUID",
-                           kPeripheralName:@"PeripheralName",
-                           kPeripheralUUIDs:@"PeripheralUUIDs",
-                           kServiceUUID:@"ServiceUUID",
-                           kServiceUUIDs:@"ServiceUUIDs",
-                           kPeripherals:@"peripherals",
-                           kIncludedServiceUUIDs:@"IncludedServiceUUIDs",
-                           kCharacteristicUUID:@"CharacteristicUUID",
-                           kCharacteristicUUIDs:@"CharacteristicUUIDs",
-                           kDescriptorUUID:@"DescriptorUUID",
-                           kServices:@"Services",
-                           kCharacteristics:@"Characteristics",
-                           kDescriptors:@"Descriptors",
-                           kProperties:@"Properties",
-                           kValue :@"Value",
-                           kState:@"State",
-                           kStateInfo:@"StateInfo",
-                           kStateField:@"StateField",
-                           kWriteType:@"WriteType",
-                           kRSSIkey:@"RSSIkey",
-                           kIsPrimaryKey:@"IsPrimaryKey",
-                           kIsBroadcasted:@"IsBroadcasted",
-                           kIsNotifying:@"IsNotifying",
-                           kShowPowerAlert:@"ShowPowerAlert",
-                           kIdentifierKey:@"IdentifierKey",
-                           kScanOptionAllowDuplicatesKey:@"ScanOptionAllowDuplicatesKey",
-                           kScanOptionSolicitedServiceUUIDs:@"ScanOptionSolicitedServiceUUIDs",
-                           kAdvertisementDataKey:@"AdvertisementDataKey",
-                           kCBAdvertisementDataManufacturerDataKey:@"CBAdvertisementDataManufacturerDataKey",
-                           kCBAdvertisementDataServiceUUIDsKey:@"CBAdvertisementDataServiceUUIDsKey",
-                           kCBAdvertisementDataServiceDataKey:@"CBAdvertisementDataServiceDataKey",
-                           kCBAdvertisementDataOverflowServiceUUIDsKey:@"CBAdvertisementDataOverflowServiceUUIDsKey",
-                           kCBAdvertisementDataSolicitedServiceUUIDsKey:@"CBAdvertisementDataSolicitedServiceUUIDsKey",
-                           kCBAdvertisementDataIsConnectable:@"CBAdvertisementDataIsConnectable",
-                           kCBAdvertisementDataTxPowerLevel:@"CBAdvertisementDataTxPowerLevel",
-                           kCBCentralManagerRestoredStatePeripheralsKey:@"CBCentralManagerRestoredStatePeripheralsKey",
-                           kCBCentralManagerRestoredStateScanServicesKey:@"CBCentralManagerRestoredStateScanServicesKey",
-                           kPeripheralBtAddress:@"BTAddress",
-                           kRawAdvertisementData:@"RawAdvertisingData",
-                           kScanRecord:@"ScanRecord"
-                           };
-    
-    NSDictionary *values = @{kWriteWithResponse:@"WriteWithResponse",
-                             kWriteWithoutResponse:@"WriteWithoutResponse",
-                             kNotifyOnConnection :@"NotifyOnConnection",
-                             kNotifyOnDisconnection:@"NotifyOnDisconnection",
-                             kNotifyOnNotification:@"NotifyOnNotification",
-                             kDisconnected :@"Disconnected",
-                             kConnecting:@"Connecting",
-                             kConnected:@"Connected",
-                             kUnknown :@"Unknown",
-                             kResetting:@"Resetting",
-                             kUnsupported:@"Unsupported",
-                             kUnauthorized:@"Unauthorized",
-                             kPoweredOff:@"PoweredOff",
-                             kPoweredOn:@"PoweredOn"};
-    
-    if([methods valueForKey:hexString])
-    {
-        return [methods valueForKey:hexString];
-    }
-    else if ([keys valueForKey:hexString])
-    {
-        return [keys valueForKey:hexString];
-    }
-    else if([values valueForKey:hexString])
-    {
-        return [values valueForKey:hexString];
-    }
-    
-    return hexString ? hexString : @"";
 }
 
 + (NSArray *)listOfServiceUUIDStrings:(NSArray *)input
