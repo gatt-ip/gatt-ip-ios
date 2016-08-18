@@ -43,6 +43,19 @@
     return state_string;
 }
 
++ (NSString *)getPeripheralName:(CBPeripheral *)peripheral
+{
+    NSString *peropheralName = @"Unknown";
+    NSString *peripheralUUIDString = [peripheral.identifier UUIDString];
+    
+    NSString *trimmedName =[peripheralUUIDString substringFromIndex:MAX((int)[peripheralUUIDString length]-6, 0)];
+    NSString *unknownName = [NSString stringWithFormat:@"Unknown-%@",trimmedName];
+    
+    peropheralName = peripheral.name ? peripheral.name : unknownName;
+    
+    return peropheralName;
+}
+
 + ( NSString *)centralStateStringFromCentralState:(CBCentralManagerState )centralState
 {
     switch (centralState) {
@@ -130,7 +143,7 @@
     return nil;
 }
 
-+ (NSDictionary *)descriptorIn:(NSMutableDictionary *)peripheralCollection withCBUUID:(CBUUID *)descriptorUUID
++ (NSDictionary *)descriptorIn:(NSMutableDictionary *)peripheralCollection withdescUUID:(CBUUID *)descriptorUUID withCharacUUID:(CBUUID *)characteristicUUID
 {
     NSArray *listOfPeripheralsInPeripheralCollectoin = [peripheralCollection allValues];
     for (CBPeripheral *peripheral in listOfPeripheralsInPeripheralCollectoin)
@@ -139,11 +152,14 @@
         {
             for (CBCharacteristic *characteristic in service.characteristics)
             {
-                for (CBDescriptor *descriptor in characteristic.descriptors)
+                if([[characteristic.UUID UUIDString] isEqualToString: [characteristicUUID UUIDString]])
                 {
-                    if([descriptor.UUID isEqual:descriptorUUID])
+                    for (CBDescriptor *descriptor in characteristic.descriptors)
                     {
-                        return @{descriptorKey:descriptor,peripheralKey:peripheral};
+                        if([descriptor.UUID isEqual:descriptorUUID])
+                        {
+                            return @{descriptorKey:descriptor,peripheralKey:peripheral};
+                        }
                     }
                 }
             }

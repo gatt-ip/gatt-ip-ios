@@ -34,6 +34,8 @@ static NSString * const descriptorKey = @"descriptor";//@"descriptor";
 
 + (NSString *)peripheralStateStringFromPeripheralState:(CBPeripheralState )peripheralState;
 
++ (NSString *)getPeripheralName:(CBPeripheral *)peripheral;
+
 + (NSString *)centralStateStringFromCentralState:(CBCentralManagerState )centralState;
 
 + (NSString *)peripheralUUIDStringFromPeripheral:(CBPeripheral *)peripheral;
@@ -46,7 +48,7 @@ static NSString * const descriptorKey = @"descriptor";//@"descriptor";
 
 + (NSDictionary *)characteristicIn:(NSMutableDictionary *)peripheralCollection  withCBUUID:(CBUUID *)kCharacteristicUUID;
 
-+ (NSDictionary *)descriptorIn:(NSMutableDictionary *)peripheralCollection withCBUUID:(CBUUID *)descriptorUUID;
++ (NSDictionary *)descriptorIn:(NSMutableDictionary *)peripheralCollection withdescUUID:(CBUUID *)descriptorUUID withCharacUUID:(CBUUID *)characteristicUUID;
 
 + (NSArray *)listOfJsonServicesFrom:(NSArray *)arrayOfServices;
 

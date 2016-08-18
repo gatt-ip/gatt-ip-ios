@@ -33,6 +33,7 @@ static NSString * const kCode                               = @"code";
 static NSString * const kMessageField                       = @"message";
 static NSString * const kResult                             = @"result";
 static NSString * const kIdField                            = @"id";
+static NSString * const kSessionIdField                     = @"session_id";
 
 //-------------------------------------- Methods ----------------------------------------
 //Central Methods
@@ -96,16 +97,16 @@ static NSString * const kScanOptionSolicitedServiceUUIDs    = @"b1";
 
 //Advertisment Data for Peripheral Keys
 static NSString * const kAdvertisementDataKey                           = @"b2";
-static NSString * const kCBAdvertisementDataManufacturerDataKey         = @"b3";
-static NSString * const kCBAdvertisementDataServiceUUIDsKey             = @"b4";
-static NSString * const kCBAdvertisementDataServiceDataKey              = @"b5";
+static NSString * const kCBAdvertisementDataManufacturerDataKey         = @"mfr";
+static NSString * const kCBAdvertisementDataServiceUUIDsKey             = @"suu";
+static NSString * const kCBAdvertisementDataServiceDataKey              = @"sdt";
 static NSString * const kCBAdvertisementDataOverflowServiceUUIDsKey     = @"b6";
 static NSString * const kCBAdvertisementDataSolicitedServiceUUIDsKey    = @"b7";
 static NSString * const kCBAdvertisementDataIsConnectable               = @"b8";
-static NSString * const kCBAdvertisementDataTxPowerLevel                = @"b9";
-static NSString * const kPeripheralBtAddress                                      = @"c1";
-static NSString * const kRawAdvertisementData                                  = @"c2";
-static NSString * const kScanRecord                                                   = @"c3";
+static NSString * const kCBAdvertisementDataTxPowerLevel                = @"txp";
+static NSString * const kPeripheralBtAddress                            = @"c1";
+static NSString * const kRawAdvertisementData                           = @"c2";
+static NSString * const kScanRecord                                     = @"c3";
 
 //Will Restore State Keys
 static NSString * const kCBCentralManagerRestoredStatePeripheralsKey    = @"da";
@@ -133,18 +134,18 @@ static NSString * const kPoweredOff                       = @"co";
 static NSString * const kPoweredOn                        = @"cp";
 
 //Advertising Data Types
-static NSString * const kADFlags                         = @"01";
-static NSString * const kShortLocalName              = @"08";
-static NSString * const kCompleteLocalName          = @"09";
-static NSString * const kTxPowerLevel                  = @"0A";
+static NSString * const kADFlags                              = @"01";
+static NSString * const kShortLocalName                       = @"08";
+static NSString * const kCompleteLocalName                    = @"09";
+static NSString * const kTxPowerLevel                         = @"0A";
 static NSString * const kListof16bitServiceSolicitationUUIDs  = @"14";
 static NSString * const kListof32bitServiceSolicitationUUIDs  = @"1F";
 static NSString * const kListof128bitServiceSolicitationUUIDs = @"15";
-static NSString * const kServiceData16bitUUID  = @"02";
-static NSString * const kServiceData32bitUUID = @"04";
-static NSString * const kServiceData128bitUUID  = @"06";
-static NSString * const kManufacturerSpecificData = @"FF";
-static NSString * const kServiceData                     = @"16";
+static NSString * const kServiceData16bitUUID                 = @"02";
+static NSString * const kServiceData32bitUUID                 = @"04";
+static NSString * const kServiceData128bitUUID                = @"06";
+static NSString * const kManufacturerSpecificData             = @"FF";
+static NSString * const kServiceData                          = @"16";
 
 
 
